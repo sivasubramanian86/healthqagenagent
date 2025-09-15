@@ -1,0 +1,79 @@
+#!/bin/bash
+# HealthQAGenAgent Google Cloud Infrastructure Bootstrap
+# Project ID: healthqagenagent
+
+# 1. Set the active project:
+gcloud config set project healthqagenagent
+
+# 2. Enable required APIs:
+gcloud services enable \
+  aiplatform.googleapis.com \
+  run.googleapis.com \
+  secretmanager.googleapis.com \
+  firestore.googleapis.com \
+  logging.googleapis.com \
+  monitoring.googleapis.com \
+  healthcare.googleapis.com \
+  --project healthqagenagent
+
+# 3. Create the service account:
+gcloud iam service-accounts create healthqagen-agent \
+  --display-name="Health QA Gen Agent Service Account" \
+  --project healthqagenagent
+
+# 4. Assign IAM roles to the service account:
+for ROLE in roles/aiplatform.user roles/run.invoker roles/secretmanager.secretAccessor roles/datastore.user roles/healthcare.fhirResourceEditor
+do
+  gcloud projects add-iam-policy-binding healthqagenagent \
+    --member="serviceAccount:healthqagen-agent@healthqagenagent.iam.gserviceaccount.com" \
+    --role="$ROLE"
+done
+
+# 5. Create Firestore in native mode (asia-south1):
+gcloud firestore databases create --region=asia-south1 --project healthqagenagent
+
+# 6. Create Healthcare dataset (us-central1):
+gcloud healthcare datasets create healthqagen-dataset \
+  --location=us-central1 \
+  --project healthqagenagent
+
+# 7. Create FHIR store (R4) in the dataset:
+gcloud healthcare fhir-stores create healthqagen-fhirstore \
+  --dataset=healthqagen-dataset \
+  --version=R4 \
+  --location=us-central1 \
+  --project healthqagenagent
+
+# 8. Build and push container image to Artifact/Container Registry:
+gcloud builds submit --tag gcr.io/healthqagenagent/healthqagen --project healthqagenagent
+
+# 9. Deploy to Cloud Run (asia-south1):
+gcloud run deploy healthqagen \
+  --image gcr.io/healthqagenagent/healthqagen \
+  --platform managed \
+  --region asia-south1 \
+  --allow-unauthenticated \
+  --set-env-vars=COMPLIANCE_MODE=HIPAA,LANG_SUPPORT=multi \
+  --project healthqagenagent
+
+# 10. Create Vertex AI endpoint (us-central1):
+ENDPOINT_ID=$(gcloud ai endpoints create \
+  --display-name=healthqagen-endpoint \
+  --region=us-central1 \
+  --project healthqagenagent --format='value(name)')
+
+# 11. Store Vertex AI endpoint ID in Secret Manager:
+gcloud secrets create vertex_endpoint_id \
+  --replication-policy="automatic" \
+  --project healthqagenagent
+echo "$ENDPOINT_ID" | gcloud secrets versions add vertex_endpoint_id --data-file=- --project healthqagenagent
+
+# 12. Output summary:
+echo "Service Account: healthqagen-agent@healthqagenagent.iam.gserviceaccount.com"
+echo "Firestore: asia-south1"
+echo "Healthcare Dataset: healthqagen-dataset (us-central1)"
+echo "FHIR Store: healthqagen-fhirstore (R4)"
+echo "Cloud Run URL:"
+gcloud run services describe healthqagen --region=asia-south1 --format='value(status.url)' --project healthqagenagent
+echo "Vertex AI Endpoint ID:"
+echo $ENDPOINT_ID

@@ -1,0 +1,49 @@
+# OS / Editor junk
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+*.swp
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.venv/
+venv/
+.env
+.env.*
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build / Dist
+dist/
+build/
+.cache/
+coverage/
+*.egg-info/
+
+# Cloud / Container
+.gcloudignore
+Dockerfile~
+*.tar
+*.gz
+
+# IDE / Editor
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Tests / Docs (optional for prod)
+tests/
+docs/
+
+# Local data
+*.sqlite
+*.db

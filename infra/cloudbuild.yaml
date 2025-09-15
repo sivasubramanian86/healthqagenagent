@@ -1,0 +1,58 @@
+steps:
+  # Install dependencies in a venv
+  - name: "python:3.11"
+    id: "install-deps"
+    entrypoint: "bash"
+    args:
+      - -c
+      - |
+        python -m venv venv
+        . venv/bin/activate
+        pip install --upgrade pip
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+  # Run the CoordinatorAgent to generate tests / orchestrate workflow
+  - name: "python:3.11"
+    id: "run-coordinator"
+    entrypoint: "bash"
+    env:
+      - "PROJECT_ID=${_PROJECT_ID}"
+      - "REGION=${_REGION}"
+      - "VERTEX_LOCATION=${_VERTEX_LOCATION}"
+      - "STORAGE_BUCKET_NAME=${_STORAGE_BUCKET_NAME}"
+    args:
+      - -c
+      - |
+        . venv/bin/activate
+        python - <<'PY'
+from agents.coordinator import CoordinatorAgent
+import os
+
+storage_bucket = os.environ.get('STORAGE_BUCKET_NAME', '')
+coord = CoordinatorAgent(storage_bucket=storage_bucket)
+# NOTE: In a real pipeline you'd supply requirement documents and code paths.
+coord.run_end_to_end(["Example requirement: patient lookup must be fast and secure"], [])
+print('Coordinator run completed')
+PY
+
+  # Upload coverage report to Cloud Storage if present
+  - name: "gcr.io/cloud-builders/gsutil"
+    id: "upload-coverage"
+    entrypoint: "bash"
+    args:
+      - -c
+      - |
+        if [ -f coverage.xml ]; then
+          echo "Uploading coverage.xml to gs://${_STORAGE_BUCKET_NAME}/coverage/coverage-${BUILD_ID}.xml"
+          gsutil cp coverage.xml gs://${_STORAGE_BUCKET_NAME}/coverage/coverage-${BUILD_ID}.xml
+        else
+          echo "coverage.xml not found, skipping upload"
+        fi
+
+substitutions:
+  _PROJECT_ID: "your-project-id"
+  _REGION: "us-central1"
+  _VERTEX_LOCATION: "us-central1"
+  _STORAGE_BUCKET_NAME: "your-storage-bucket"
+
+timeout: "1200s"
