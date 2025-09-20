@@ -1,5 +1,6 @@
-import { safePost } from '../utils/http';
-import { TestQuestion } from './TestGeneratorAgent';
+
+import { GoogleAuth } from 'google-auth-library';
+import { logger } from 'firebase-functions/v1';
 
 export interface TestResult {
   id: string;
@@ -7,25 +8,18 @@ export interface TestResult {
   reason?: string;
 }
 
-/**
- * Evaluates test results for compliance and correctness.
- * 
- * Bridge Mode: Calls Python FastAPI service deployed at process.env.PY_EVALUATOR_URL
- * If PY_EVALUATOR_URL is not set, returns fallback dummy data.
- * 
- * Port Mode TODO: Inline the Python evaluation logic here:
- * 1. Validate answer format and constraints
- * 2. Check against reference data
- * 3. Generate feedback messages
- */
 export class EvaluatorAgent {
   private readonly fallbackResults: TestResult[] = [
     { id: 'q1', valid: true, reason: 'Passed basic compliance' },
     { id: 'q2', valid: false, reason: 'Answer format incorrect' }
   ];
 
+  private async getAuthenticatedClient(targetAudience: string) {
+    const auth = new GoogleAuth();
+    return auth.getIdTokenClient(targetAudience);
+  }
+
   async run(input: any[]): Promise<{ status: 'success' | 'error'; data: TestResult[]; message?: string }> {
-    // Validate input
     if (!Array.isArray(input)) {
       return {
         status: 'error',
@@ -34,28 +28,36 @@ export class EvaluatorAgent {
       };
     }
 
-    const result = await safePost<TestResult[]>(
-      process.env.PY_EVALUATOR_URL,
-      input,
-      this.fallbackResults,
-      {
-        timeout: 5000,
-        validateStatus: (status) => status === 200
-      }
-    );
-
-    // Additional response validation
-    if (result.status === 'success' && (!Array.isArray(result.data) || !result.data.every(
-      (r: any) => r && typeof r.id === 'string' && typeof r.valid === 'boolean'
-    ))) {
-      console.error('Invalid response data structure:', result.data);
-      return {
-        status: 'error',
-        message: 'Invalid response format from evaluator service',
-        data: this.fallbackResults
-      };
+    const evaluatorUrl = process.env.EVALUATOR_URL;
+    if (!evaluatorUrl) {
+      logger.warn('EVALUATOR_URL not set, using fallback data');
+      return { status: 'success', data: this.fallbackResults };
     }
 
-    return result;
+    try {
+      const client = await this.getAuthenticatedClient(evaluatorUrl);
+      const response = await client.request({
+        url: evaluatorUrl,
+        method: 'POST',
+        data: input,
+      });
+
+      const results = response.data as TestResult[];
+      if (!Array.isArray(results) || !results.every(
+        (r: any) => r && typeof r.id === 'string' && typeof r.valid === 'boolean'
+      )) {
+        logger.error('Invalid response data structure:', results);
+        return {
+          status: 'error',
+          message: 'Invalid response format from evaluator service',
+          data: this.fallbackResults
+        };
+      }
+
+      return { status: 'success', data: results };
+    } catch (error) {
+      logger.error('Error calling evaluator service:', error);
+      return { status: 'error', data: this.fallbackResults };
+    }
   }
 }

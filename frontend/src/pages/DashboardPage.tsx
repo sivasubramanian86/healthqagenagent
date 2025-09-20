@@ -1,5 +1,6 @@
+
 import React, { useEffect, useState } from 'react';
-import { getFhirSummary } from '../api/client';
+import { getDashboardData } from '../api/client';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -13,7 +14,6 @@ import { Bar, Pie } from 'react-chartjs-2';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Legend);
 
-
 const KPI = ({ title, value }: { title: string; value: string }) => (
   <div className="bg-white dark:bg-gray-800 p-4 rounded shadow">
     <div className="text-sm text-gray-500">{title}</div>
@@ -22,21 +22,58 @@ const KPI = ({ title, value }: { title: string; value: string }) => (
 );
 
 export default function DashboardPage() {
-  const [summary, setSummary] = useState<any>(null);
+  const [dashboardData, setDashboardData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    getFhirSummary()
-      .then(data => {
-        setSummary(data);
-        console.log('FHIR summary loaded', data);
-      })
-      .catch(err => {
-        setError('Failed to load FHIR summary');
-        setSummary({ patientCount: 0, resourceCounts: {} });
-        console.error('Failed to load FHIR summary', err);
-      });
+    const fetchData = async () => {
+      const response = await getDashboardData();
+      if (response.status === 'success') {
+        setDashboardData(response.data);
+      } else {
+        setDashboardData(response.data);
+        setError(response.message || 'An unknown error occurred.');
+        console.warn('Using fallback data for dashboard.');
+      }
+    };
+
+    fetchData();
   }, []);
+
+  const resourceCountsData = {
+    labels: dashboardData?.fhirSummary ? Object.keys(dashboardData.fhirSummary.resourceCounts) : [],
+    datasets: [
+      {
+        label: '# of Resources',
+        data: dashboardData?.fhirSummary ? Object.values(dashboardData.fhirSummary.resourceCounts) : [],
+        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+        borderColor: 'rgba(54, 162, 235, 1)',
+        borderWidth: 1,
+      },
+    ],
+  };
+
+  const passCount = dashboardData?.results?.filter((r: any) => r.valid).length ?? 0;
+  const failCount = dashboardData?.results?.filter((r: any) => !r.valid).length ?? 0;
+
+  const resultDistributionData = {
+    labels: ['Pass', 'Fail'],
+    datasets: [
+      {
+        label: 'Test Result Distribution',
+        data: [passCount, failCount],
+        backgroundColor: [
+          'rgba(75, 192, 192, 0.2)',
+          'rgba(255, 99, 132, 0.2)',
+        ],
+        borderColor: [
+          'rgba(75, 192, 192, 1)',
+          'rgba(255, 99, 132, 1)',
+        ],
+        borderWidth: 1,
+      },
+    ],
+  };
 
   return (
     <div>
@@ -45,34 +82,35 @@ export default function DashboardPage() {
         <p className="text-gray-600 dark:text-gray-300">Dashboard — manage and generate FHIR testcases for your project.</p>
       </section>
 
+      {error && <p className="mb-4 text-orange-500">Warning: {error}</p>}
+
       <section className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <KPI title="Total Patients" value={summary?.patientCount?.toString() ?? '...'} />
-        <KPI title="Tests Generated" value={summary?.resourceCounts?.Observation?.toString() ?? '...'} />
-        <KPI title="Conditions" value={summary?.resourceCounts?.Condition?.toString() ?? '...'} />
+        <KPI title="Total Patients" value={dashboardData?.fhirSummary?.patientCount?.toString() ?? '...'} />
+        <KPI title="Tests Generated" value={dashboardData?.questions?.length?.toString() ?? '...'} />
+        <KPI title="Tests Evaluated" value={dashboardData?.results?.length?.toString() ?? '...'} />
       </section>
 
       <section className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="bg-white dark:bg-gray-800 p-4 rounded shadow">
           <h3 className="font-medium mb-2">Tests by Resource Type</h3>
-          {/* Chart remains dummy for now */}
+          {dashboardData?.fhirSummary && <Bar data={resourceCountsData} />}
         </div>
 
         <div className="bg-white dark:bg-gray-800 p-4 rounded shadow">
           <h3 className="font-medium mb-2">Result Distribution</h3>
-          {/* Chart remains dummy for now */}
+          {dashboardData?.results && <Pie data={resultDistributionData} />}
         </div>
       </section>
 
       <section>
         <h2 className="text-lg font-semibold mb-2">Resource Counts</h2>
         <ul className="space-y-2">
-          {summary?.resourceCounts
-            ? Object.entries(summary.resourceCounts).map(([k, v]) => (
+          {dashboardData?.fhirSummary
+            ? Object.entries(dashboardData.fhirSummary.resourceCounts).map(([k, v]: [string, any]) => (
                 <li key={k} className="bg-white dark:bg-gray-800 p-3 rounded shadow">{k}: {v}</li>
               ))
             : <li>Loading...</li>}
         </ul>
-        {error && <div className="text-red-500 mt-2">{error}</div>}
       </section>
     </div>
   );

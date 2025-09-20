@@ -1,79 +1,36 @@
 #!/bin/bash
-# HealthQAGenAgent Google Cloud Infrastructure Bootstrap
-# Project ID: healthqagenagent
+# infra-boot.sh: Script to test the HealthQAGenAgent API endpoints.
 
-# 1. Set the active project:
-gcloud config set project healthqagenagent
+echo "Testing HealthQAGenAgent APIs..."
 
-# 2. Enable required APIs:
-gcloud services enable \
-  aiplatform.googleapis.com \
-  run.googleapis.com \
-  secretmanager.googleapis.com \
-  firestore.googleapis.com \
-  logging.googleapis.com \
-  monitoring.googleapis.com \
-  healthcare.googleapis.com \
-  --project healthqagenagent
+# --- Test FHIR Service ---
+echo "
+[1/5] Testing FHIR Service Endpoint..."
+curl -X POST http://127.0.0.1:8000/run -H "Content-Type: application/json" -d '{}' && echo "
+"
 
-# 3. Create the service account:
-gcloud iam service-accounts create healthqagen-agent \
-  --display-name="Health QA Gen Agent Service Account" \
-  --project healthqagenagent
+# --- Test Test Generation Service ---
+echo "
+[2/5] Testing Test Generation Endpoint..."
+curl -X POST http://127.0.0.1:8004/generate_test -H "Content-Type: application/json" -d '{"intent": {"id": "1", "description": "test"}}' && echo "
+"
 
-# 4. Assign IAM roles to the service account:
-for ROLE in roles/aiplatform.user roles/run.invoker roles/secretmanager.secretAccessor roles/datastore.user roles/healthcare.fhirResourceEditor
-do
-  gcloud projects add-iam-policy-binding healthqagenagent \
-    --member="serviceAccount:healthqagen-agent@healthqagenagent.iam.gserviceaccount.com" \
-    --role="$ROLE"
-done
+# --- Test Test Results/Evaluation Service ---
+echo "
+[3/5] Testing Evaluator Service Endpoint..."
+curl -X POST http://127.0.0.1:8003/run -H "Content-Type: application/json" -d '{"tests": []}' && echo "
+"
 
-# 5. Create Firestore in native mode (asia-south1):
-gcloud firestore databases create --region=asia-south1 --project healthqagenagent
+# --- Test Bug Analysis Service ---
+echo "
+[4/5] Testing Bug Analysis Endpoint..."
+curl -X POST http://127.0.0.1:8001/run -H "Content-Type: application/json" -d '{"mock": true, "mock_file": "bugminer-service/mock_jira_issues.json"}' && echo "
+"
 
-# 6. Create Healthcare dataset (us-central1):
-gcloud healthcare datasets create healthqagen-dataset \
-  --location=us-central1 \
-  --project healthqagenagent
+# --- Test Code Analysis Service ---
+echo "
+[5/5] Testing Code Analysis Endpoint..."
+curl -X POST http://127.0.0.1:8002/run -H "Content-Type: application/json" -d '{"code": "def hello():\n  return \"world\""}' && echo "
+"
 
-# 7. Create FHIR store (R4) in the dataset:
-gcloud healthcare fhir-stores create healthqagen-fhirstore \
-  --dataset=healthqagen-dataset \
-  --version=R4 \
-  --location=us-central1 \
-  --project healthqagenagent
-
-# 8. Build and push container image to Artifact/Container Registry:
-gcloud builds submit --tag gcr.io/healthqagenagent/healthqagen --project healthqagenagent
-
-# 9. Deploy to Cloud Run (asia-south1):
-gcloud run deploy healthqagen \
-  --image gcr.io/healthqagenagent/healthqagen \
-  --platform managed \
-  --region asia-south1 \
-  --allow-unauthenticated \
-  --set-env-vars=COMPLIANCE_MODE=HIPAA,LANG_SUPPORT=multi \
-  --project healthqagenagent
-
-# 10. Create Vertex AI endpoint (us-central1):
-ENDPOINT_ID=$(gcloud ai endpoints create \
-  --display-name=healthqagen-endpoint \
-  --region=us-central1 \
-  --project healthqagenagent --format='value(name)')
-
-# 11. Store Vertex AI endpoint ID in Secret Manager:
-gcloud secrets create vertex_endpoint_id \
-  --replication-policy="automatic" \
-  --project healthqagenagent
-echo "$ENDPOINT_ID" | gcloud secrets versions add vertex_endpoint_id --data-file=- --project healthqagenagent
-
-# 12. Output summary:
-echo "Service Account: healthqagen-agent@healthqagenagent.iam.gserviceaccount.com"
-echo "Firestore: asia-south1"
-echo "Healthcare Dataset: healthqagen-dataset (us-central1)"
-echo "FHIR Store: healthqagen-fhirstore (R4)"
-echo "Cloud Run URL:"
-gcloud run services describe healthqagen --region=asia-south1 --format='value(status.url)' --project healthqagenagent
-echo "Vertex AI Endpoint ID:"
-echo $ENDPOINT_ID
+echo "API test sequence complete."

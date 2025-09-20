@@ -3,10 +3,26 @@ from __future__ import annotations
 
 from typing import List
 
+from fastapi import FastAPI
+from pydantic import BaseModel
+
 from common.models import CodeSymbol, TestIntent, GeneratedTest, Requirement, BugItem
 from common.security import redact_pii, deny_real_phi_in_tests
 import os
 from pathlib import Path
+
+app = FastAPI()
+
+
+class PlanTestsRequest(BaseModel):
+    symbols: List[CodeSymbol]
+    requirements: List[Requirement]
+    bugs: List[BugItem]
+
+
+class GenerateTestRequest(BaseModel):
+    intent: TestIntent
+    symbol: CodeSymbol | None = None
 
 
 class TestGeneratorAgent:
@@ -68,3 +84,20 @@ class TestGeneratorAgent:
             return tests[0]
 
         return GeneratedTest(intent_id=intent.id, code=redacted, metadata={"path": str(fname)})
+
+
+@app.get("/")
+def read_root():
+    return {"message": "Test Generator Service is running."}
+
+
+@app.post("/plan_tests", response_model=List[TestIntent])
+def plan_tests_endpoint(request: PlanTestsRequest):
+    agent = TestGeneratorAgent()
+    return agent.plan_tests(request.symbols, request.requirements, request.bugs)
+
+
+@app.post("/generate_test", response_model=GeneratedTest)
+def generate_test_endpoint(request: GenerateTestRequest):
+    agent = TestGeneratorAgent()
+    return agent.generate_test(request.intent, request.symbol)

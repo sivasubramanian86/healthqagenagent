@@ -1,54 +1,49 @@
-import React from 'react';
+
 import React, { useEffect, useState } from 'react';
 import { getTestResults } from '../api/client';
-
-const rows = [
-  { id: '1', type: 'Patient', status: 'Pass', date: '2025-09-01' },
-  { id: '2', type: 'Observation', status: 'Fail', date: '2025-09-02' }
-];
 
 export default function TestResultsPage() {
   const [results, setResults] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    getTestResults()
-      .then(data => {
-        setResults(data);
-        console.log('Test results loaded', data);
-      })
-      .catch(err => {
-        setError('Failed to load test results');
-        setResults([]);
-        alert('Failed to load test results');
-      });
+    const fetchTestResults = async () => {
+      const response = await getTestResults();
+      if (response.status === 'success') {
+        setResults(response.data);
+      } else {
+        setResults(response.data);
+        setError(response.message || 'An unknown error occurred.');
+        console.warn('Using fallback data for test results.');
+      }
+    };
+
+    fetchTestResults();
   }, []);
 
   return (
     <div>
       <h1 className="text-2xl font-semibold mb-4">Test Results</h1>
+      {error && <p className="mb-4 text-orange-500">Warning: {error}</p>}
       <div className="bg-white dark:bg-gray-800 p-4 rounded shadow">
         <table className="w-full table-auto">
           <thead>
-            <tr>
+            <tr className="border-b">
               <th className="text-left p-2">ID</th>
-              <th className="text-left p-2">Resource Type</th>
               <th className="text-left p-2">Status</th>
               <th className="text-left p-2">Date</th>
             </tr>
           </thead>
           <tbody>
             {results.map(r => (
-              <tr key={r.id}>
+              <tr key={r.id} className="border-b">
                 <td className="p-2">{r.id}</td>
-                <td className="p-2">{r.type}</td>
-                <td className="p-2">{r.valid ? '✅' : '❌'}</td>
-                <td className="p-2">{r.reason}</td>
+                <td className="p-2">{r.status}</td>
+                <td className="p-2">{r.date}</td>
               </tr>
             ))}
           </tbody>
         </table>
-        {error && <div className="text-red-500 mt-2">{error}</div>}
       </div>
     </div>
   );

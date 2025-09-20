@@ -1,15 +1,17 @@
-"""BugMinerAgent: fetch recent bugs from issue trackers like Jira or Azure DevOps.
 
-This implementation provides minimal REST-based fetchers for Jira and Azure DevOps.
-Credentials should be passed via the `config` dict or environment variables.
-"""
 from __future__ import annotations
 
 from typing import List, Dict, Optional
 import os
 import requests
+from fastapi import FastAPI
+from pydantic import BaseModel
+import uvicorn
 
 from common.models import BugItem
+from common.security import redact_pii
+
+app = FastAPI()
 
 
 class BugMinerAgent:
@@ -34,7 +36,6 @@ class BugMinerAgent:
                 with open(self.mock_file, 'r', encoding='utf-8') as fh:
                     data = json.load(fh)
                 items: List[BugItem] = []
-                from common.security import redact_pii
                 for it in data.get('bugs', []):
                     items.append(BugItem(title=it.get('title',''), description=redact_pii(it.get('description',''))))
                 return items
@@ -60,7 +61,6 @@ class BugMinerAgent:
         resp.raise_for_status()
         data = resp.json()
         issues = []
-        from common.security import redact_pii
         for it in data.get("issues", []):
             fields = it.get("fields", {})
             issues.append(BugItem(title=fields.get("summary", ""), description=redact_pii(fields.get("description", ""))))
@@ -87,9 +87,37 @@ class BugMinerAgent:
         resp2.raise_for_status()
         data2 = resp2.json()
         items = []
-        from common.security import redact_pii
         for it in data2.get("value", []):
             fields = it.get("fields", {})
             items.append(BugItem(title=fields.get("System.Title", ""), description=redact_pii(fields.get("System.Description", ""))))
         return items
 
+
+class RunPayload(BaseModel):
+    provider: str = "jira"
+    config: Optional[Dict] = None
+    project: str = ""
+    limit: int = 50
+    mock: bool = False
+    mock_file: str | None = None
+
+
+@app.get("/")
+def read_root():
+    return {"status": "ok"}
+
+
+@app.post("/run")
+def run_bug_miner(payload: RunPayload):
+    agent = BugMinerAgent(
+        provider=payload.provider,
+        config=payload.config,
+        mock=payload.mock,
+        mock_file=payload.mock_file,
+    )
+    bugs = agent.fetch_recent_bugs(project=payload.project, limit=payload.limit)
+    return {"status": "success", "data": bugs}
+
+
+if __name__ == "__main__":
+    uvicorn.run("main:app", host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))

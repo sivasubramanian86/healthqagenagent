@@ -1,0 +1,62 @@
+# Default gcloudignore file. This file is not read by gcloud.
+#
+# Lines beginning with "#!" are directives to gcloud.
+#
+# It is recommended to include this file in your version control system
+# so that anyone who builds your application has the same exclusions.
+
+# This file specifies files that are *not* uploaded to Google Cloud when
+# you run `gcloud app deploy` or `gcloud functions deploy`.
+
+# For a more detailed syntax description, please type:
+#   gcloud topic gcloudignore
+
+# Node.js dependencies:
+node_modules/
+
+# Python build artifacts:
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Python virtual environments:
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+env/
+venv/
+.env
+
+# Git files:
+.git/
+.gitignore
+
+# Local development files:
+.DS_Store
+
+# Test files:
+tests/
+
+# Logs:
+logs/
+npm-debug.log
+
+# Firebase:
+.firebase/
+firebase.json
+
+# Root directory files that are not part of the application:
+README.md

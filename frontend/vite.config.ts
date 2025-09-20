@@ -1,10 +1,16 @@
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
 
-// Use dynamic import for the react plugin to avoid CJS loading issues
-export default async function() {
-  const reactPlugin = (await import('@vitejs/plugin-react')).default;
-  return defineConfig({
-    plugins: [reactPlugin()],
-    server: { port: 5173 }
-  });
-}
+// https://vitejs.dev/config/
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://127.0.0.1:5001/healthqagenagent/us-central1',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
+    },
+  },
+})

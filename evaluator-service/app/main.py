@@ -5,7 +5,12 @@ from typing import List
 import subprocess
 
 from common.models import GeneratedTest
-from common.gcp_clients import get_bigquery_client
+from fastapi import FastAPI
+from pydantic import BaseModel
+import uvicorn
+import os
+
+app = FastAPI()
 
 
 class ValidationAgent:
@@ -18,6 +23,7 @@ class ValidationAgent:
 
     def _init_bq(self):
         if self.bq is None:
+            from common.gcp_clients import get_bigquery_client
             self.bq = get_bigquery_client()
 
     def run_tests_locally(self, tests: List[GeneratedTest]) -> dict:
@@ -40,6 +46,30 @@ class ValidationAgent:
             return {"passed": 0, "total": len(tests), "coverage": 0.0}
 
     def log_results(self, results: dict) -> None:
+        if self.mock:
+            print("Skipping BigQuery logging in mock mode.")
+            return
         self._init_bq()
         # TODO: insert rows into BigQuery; placeholder prints
         print("Logging results to BigQuery:", results)
+
+
+class RunPayload(BaseModel):
+    tests: List[GeneratedTest]
+
+
+@app.get("/")
+def read_root():
+    return {"status": "ok"}
+
+
+@app.post("/run")
+def run_tests(payload: RunPayload):
+    agent = ValidationAgent(mock=True)
+    results = agent.run_tests_locally(payload.tests)
+    agent.log_results(results)
+    return {"status": "success", "data": results}
+
+
+if __name__ == "__main__":
+    uvicorn.run("main:app", host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))

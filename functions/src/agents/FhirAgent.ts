@@ -1,4 +1,6 @@
-import axios from 'axios';
+
+import { GoogleAuth } from 'google-auth-library';
+import { logger } from 'firebase-functions/v1';
 
 // Common type used across agents
 export type FhirResource = { [key: string]: any };
@@ -6,14 +8,15 @@ export type FhirResource = { [key: string]: any };
 export interface FhirSummary {
   patientCount: number;
   resourceCounts: Record<string, number>;
-  resources: FhirResource[]; // Add resources array for compatibility
+  resources: FhirResource[];
 }
 
 export class FhirAgent {
-  /**
-   * Bridge Mode: Calls Python FastAPI service for FHIR data analysis.
-   * TODO: For Port Mode, translate the Python FHIR logic here.
-   */
+  private async getAuthenticatedClient(targetAudience: string) {
+    const auth = new GoogleAuth();
+    return auth.getIdTokenClient(targetAudience);
+  }
+
   async run(input: any): Promise<{ status: 'success' | 'error'; data: FhirSummary; message?: string }> {
     const fallback: FhirSummary = {
       patientCount: 42,
@@ -24,19 +27,23 @@ export class FhirAgent {
       ]
     };
 
-    try {
-      const response = await axios.post(
-        'https://fhir-service/run',
-        input,
-        {
-          headers: { 'Content-Type': 'application/json' },
-          timeout: 5000
-        }
-      );
+    const fhirUrl = process.env.FHIR_URL;
+    if (!fhirUrl) {
+      logger.warn('FHIR_URL not set, using fallback data');
+      return { status: 'success', data: fallback };
+    }
 
-      const summary = response.data;
+    try {
+      const client = await this.getAuthenticatedClient(fhirUrl);
+      const response = await client.request({
+        url: fhirUrl,
+        method: 'POST',
+        data: input,
+      });
+
+      const summary = response.data as FhirSummary;
       if (!summary || typeof summary.patientCount !== 'number') {
-        console.error('Invalid response from fhir-service:', summary);
+        logger.error('Invalid response from fhir-service:', summary);
         return { status: 'error', message: 'Invalid response from fhir-service', data: fallback };
       }
 
@@ -47,7 +54,7 @@ export class FhirAgent {
       else if (err.response) message = `Service error: ${err.response.status} ${err.response.statusText}`;
       else if (err.request) message = 'Network error connecting to fhir-service';
       else if (err.message) message = err.message;
-      console.error('FhirAgent error:', message, err);
+      logger.error('FhirAgent error:', message, err);
       return { status: 'error', message, data: fallback };
     }
   }

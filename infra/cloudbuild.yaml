@@ -1,58 +1,62 @@
 steps:
-  # Install dependencies in a venv
-  - name: "python:3.11"
-    id: "install-deps"
-    entrypoint: "bash"
-    args:
-      - -c
-      - |
-        python -m venv venv
-        . venv/bin/activate
-        pip install --upgrade pip
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-
-  # Run the CoordinatorAgent to generate tests / orchestrate workflow
-  - name: "python:3.11"
-    id: "run-coordinator"
-    entrypoint: "bash"
-    env:
-      - "PROJECT_ID=${_PROJECT_ID}"
-      - "REGION=${_REGION}"
-      - "VERTEX_LOCATION=${_VERTEX_LOCATION}"
-      - "STORAGE_BUCKET_NAME=${_STORAGE_BUCKET_NAME}"
-    args:
-      - -c
-      - |
-        . venv/bin/activate
-        python - <<'PY'
-from agents.coordinator import CoordinatorAgent
-import os
-
-storage_bucket = os.environ.get('STORAGE_BUCKET_NAME', '')
-coord = CoordinatorAgent(storage_bucket=storage_bucket)
-# NOTE: In a real pipeline you'd supply requirement documents and code paths.
-coord.run_end_to_end(["Example requirement: patient lookup must be fast and secure"], [])
-print('Coordinator run completed')
-PY
-
-  # Upload coverage report to Cloud Storage if present
-  - name: "gcr.io/cloud-builders/gsutil"
-    id: "upload-coverage"
-    entrypoint: "bash"
-    args:
-      - -c
-      - |
-        if [ -f coverage.xml ]; then
-          echo "Uploading coverage.xml to gs://${_STORAGE_BUCKET_NAME}/coverage/coverage-${BUILD_ID}.xml"
-          gsutil cp coverage.xml gs://${_STORAGE_BUCKET_NAME}/coverage/coverage-${BUILD_ID}.xml
-        else
-          echo "coverage.xml not found, skipping upload"
-        fi
-
-substitutions:
-  _PROJECT_ID: "your-project-id"
-  _REGION: "us-central1"
-  _VERTEX_LOCATION: "us-central1"
-  _STORAGE_BUCKET_NAME: "your-storage-bucket"
-
-timeout: "1200s"
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  args:
+  - -c
+  - |
+    cp requirements.txt bugminer-service/requirements.txt
+    cp -r common bugminer-service/
+    cp requirements.txt code_analysis_service/requirements.txt
+    cp -r common code_analysis_service/
+    cp requirements.txt evaluator-service/requirements.txt
+    cp -r common evaluator-service/
+    cp requirements.txt fhir-service/requirements.txt
+    cp -r common fhir-service/
+    cp requirements.txt test-generator-service/requirements.txt
+    cp -r common test-generator-service/
+- name: 'gcr.io/cloud-builders/docker'
+  dir: 'bugminer-service'
+  args: ['build', '-t', 'gcr.io/$PROJECT_ID/bugminer-service', '.', '-f', '../Dockerfile.python']
+- name: 'gcr.io/cloud-builders/docker'
+  dir: 'code_analysis_service'
+  args: ['build', '-t', 'gcr.io/$PROJECT_ID/code-analysis-service', '--build-arg', 'APP_ENTRYPOINT=main:app', '.', '-f', '../Dockerfile.python']
+- name: 'gcr.io/cloud-builders/docker'
+  dir: 'evaluator-service'
+  args: ['build', '-t', 'gcr.io/$PROJECT_ID/evaluator-service', '.', '-f', '../Dockerfile.python']
+- name: 'gcr.io/cloud-builders/docker'
+  dir: 'fhir-service'
+  args: ['build', '-t', 'gcr.io/$PROJECT_ID/fhir-service', '.', '-f', '../Dockerfile.python']
+- name: 'gcr.io/cloud-builders/docker'
+  dir: 'test-generator-service'
+  args: ['build', '-t', 'gcr.io/$PROJECT_ID/test-generator-service', '.', '-f', '../Dockerfile.python']
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'gcr.io/$PROJECT_ID/bugminer-service']
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'gcr.io/$PROJECT_ID/code-analysis-service']
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'gcr.io/$PROJECT_ID/evaluator-service']
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'gcr.io/$PROJECT_ID/fhir-service']
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'gcr.io/$PROJECT_ID/test-generator-service']
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: gcloud
+  args: ['run', 'deploy', 'bugminer-service', '--image', 'gcr.io/$PROJECT_ID/bugminer-service', '--region', 'us-central1', '--platform', 'managed', '--quiet', '--allow-unauthenticated']
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: gcloud
+  args: ['run', 'deploy', 'code-analysis-service', '--image', 'gcr.io/$PROJECT_ID/code-analysis-service', '--region', 'us-central1', '--platform', 'managed', '--quiet', '--allow-unauthenticated']
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: gcloud
+  args: ['run', 'deploy', 'evaluator-service', '--image', 'gcr.io/$PROJECT_ID/evaluator-service', '--region', 'us-central1', '--platform', 'managed', '--quiet', '--allow-unauthenticated']
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: gcloud
+  args: ['run', 'deploy', 'fhir-service', '--image', 'gcr.io/$PROJECT_ID/fhir-service', '--region', 'us-central1', '--platform', 'managed', '--quiet', '--allow-unauthenticated']
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: gcloud
+  args: ['run', 'deploy', 'test-generator-service', '--image', 'gcr.io/$PROJECT_ID/test-generator-service', '--region', 'us-central1', '--platform', 'managed', '--quiet', '--allow-unauthenticated']
+images:
+- 'gcr.io/$PROJECT_ID/bugminer-service'
+- 'gcr.io/$PROJECT_ID/code-analysis-service'
+- 'gcr.io/$PROJECT_ID/evaluator-service'
+- 'gcr.io/$PROJECT_ID/fhir-service'
+- 'gcr.io/$PROJECT_ID/test-generator-service'

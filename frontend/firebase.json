@@ -8,6 +8,30 @@
     ],
     "rewrites": [
       {
+        "source": "/api/dashboard",
+        "function": "dashboard"
+      },
+      {
+        "source": "/api/fhirSummary",
+        "function": "fhirSummary"
+      },
+      {
+        "source": "/api/generateTests",
+        "function": "generateTests"
+      },
+      {
+        "source": "/api/testResults",
+        "function": "testResults"
+      },
+      {
+        "source": "/api/analyzeBug",
+        "function": "analyzeBug"
+      },
+      {
+        "source": "/api/analyzeCode",
+        "function": "analyzeCode"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }

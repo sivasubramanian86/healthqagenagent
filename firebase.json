@@ -8,6 +8,10 @@
     ],
     "rewrites": [
       {
+        "source": "/api/dashboard",
+        "function": "dashboard"
+      },
+      {
         "source": "/api/fhir/summary",
         "function": "fhirSummary"
       },
@@ -20,14 +24,25 @@
         "function": "testResults"
       },
       {
+        "source": "/api/bug/analyze",
+        "function": "analyzeBug"
+      },
+      {
+        "source": "/api/code/analyze",
+        "function": "analyzeCode"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }
     ]
-  }
-  ,
+  },
   "functions": {
     "source": "functions",
-    "runtime": "nodejs20"
+    "runtime": "nodejs20",
+    "predeploy": [
+      "npm --prefix \"$RESOURCE_DIR\" run build",
+      "cp .env.healthqagenagent \"$RESOURCE_DIR/.env\""
+    ]
   }
 }

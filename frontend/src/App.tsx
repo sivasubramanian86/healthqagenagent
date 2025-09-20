@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import DashboardPage from './pages/DashboardPage';
 import GeneratePage from './pages/GeneratePage';
@@ -8,6 +8,11 @@ import SettingsPage from './pages/SettingsPage';
 import Layout from './components/Layout';
 
 export default function App() {
+  // Set dark mode as the default theme
+  useEffect(() => {
+    document.documentElement.classList.add('dark');
+  }, []);
+
   return (
     <Layout>
       <Routes>

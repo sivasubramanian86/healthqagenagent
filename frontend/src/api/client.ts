@@ -1,33 +1,36 @@
 
-export async function getFhirSummary() {
-  console.log('[API] GET /api/fhir/summary');
-  const res = await fetch('/api/fhir/summary');
-  const text = await res.clone().text();
-  console.log('[API] Response:', text);
-  if (!res.ok) throw new Error('Failed to fetch FHIR summary');
-  return res.json();
-}
-
-
-export async function generateTests(payload: any = {}) {
-  console.log('[API] POST /api/tests/generate', payload);
-  const res = await fetch('/api/tests/generate', {
+const post = async (url: string, body: any) => {
+  const response = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
+    body: JSON.stringify(body),
   });
-  const text = await res.clone().text();
-  console.log('[API] Response:', text);
-  if (!res.ok) throw new Error('Failed to generate tests');
-  return res.json();
-}
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`API request to ${url} failed with status ${response.status}: ${errorText}`);
+  }
+  return response.json();
+};
 
+export const getDashboardData = async () => {
+  try {
+    return await post('/api/dashboard', {});
+  } catch (error: any) {
+    console.error("Error fetching dashboard data:", error);
+    return {
+        status: 'error',
+        message: error.message || 'Failed to fetch dashboard data.',
+        data: {
+            fhirSummary: { patientCount: 0, resourceCounts: {} },
+            questions: [],
+            results: []
+        }
+    };
+  }
+};
 
-export async function getTestResults() {
-  console.log('[API] GET /api/tests/results');
-  const res = await fetch('/api/tests/results');
-  const text = await res.clone().text();
-  console.log('[API] Response:', text);
-  if (!res.ok) throw new Error('Failed to fetch test results');
-  return res.json();
-}
+export const getFhirSummary = (fhirData: any) => post('/api/fhir/summary', fhirData);
+
+export const generateTests = (resourceType: string, count: number) => post('/api/tests/generate', { resourceType, count });
+
+export const getTestResults = (results: any) => post('/api/tests/results', results);
