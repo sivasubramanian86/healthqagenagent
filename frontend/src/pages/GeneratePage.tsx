@@ -1,16 +1,26 @@
 import React, { useState } from 'react';
+import { generateTests } from '../api/client';
 
 export default function GeneratePage() {
   const [resource, setResource] = useState('Patient');
   const [count, setCount] = useState(10);
   const [loading, setLoading] = useState(false);
 
+  const [result, setResult] = useState<any>(null);
+
   async function handleGenerate() {
     setLoading(true);
-    // TODO: call backend API to generate tests
-    await new Promise((r) => setTimeout(r, 1200));
-    setLoading(false);
-    alert('Generated ' + count + ' test cases for ' + resource);
+    try {
+      const data = await generateTests({ resource, count });
+      setResult(data);
+      console.log('Tests generated', data);
+      alert('Generated ' + count + ' test cases for ' + resource);
+    } catch (err) {
+      console.error('Failed to generate tests', err);
+      alert('Failed to generate tests');
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -31,6 +41,7 @@ export default function GeneratePage() {
         <button onClick={handleGenerate} className="px-4 py-2 bg-indigo-600 text-white rounded" disabled={loading}>
           {loading ? 'Generating...' : 'Generate'}
         </button>
+        {result && <pre className="mt-4 bg-gray-100 dark:bg-gray-800 p-4 rounded text-sm">{JSON.stringify(result, null, 2)}</pre>}
       </div>
     </div>
   );

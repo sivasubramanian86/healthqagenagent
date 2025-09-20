@@ -1,0 +1,70 @@
+import { safePost } from '../utils/http';
+
+// Common types shared across agents
+export type FhirResource = { [key: string]: any };
+
+export type TestQuestion = {
+  id: string;
+  questionText: string;
+  options: string[];
+  correctAnswer: string;
+  rationale: string;
+};
+
+/**
+ * Generates quiz questions from FHIR data.
+ * 
+ * Bridge Mode: Calls Python FastAPI service deployed at process.env.PY_TESTGEN_URL
+ * If PY_TESTGEN_URL is not set, returns fallback dummy data.
+ * 
+ * Port Mode TODO: Inline the Python test_generator.py logic here:
+ * 1. Extract clinical concepts from FHIR resources
+ * 2. Generate natural language questions
+ * 3. Create plausible distractors for multiple choice
+ */
+export class TestGeneratorAgent {
+  private readonly fallbackQuestions: TestQuestion[] = [
+    {
+      id: 'q1',
+      questionText: 'What is the primary diagnosis for Patient X?',
+      options: ['Hypertension', 'Diabetes', 'Asthma', 'Fever'],
+      correctAnswer: 'Diabetes',
+      rationale: 'The patient\'s record shows elevated blood sugar levels consistent with Diabetes.'
+    }
+  ];
+
+  async run(input: { fhirData: FhirResource[] }): Promise<{ status: 'success' | 'error'; data: TestQuestion[]; message?: string }> {
+    // Validate input
+    if (!Array.isArray(input.fhirData)) {
+      return {
+        status: 'error',
+        message: 'Invalid input: fhirData must be an array',
+        data: this.fallbackQuestions
+      };
+    }
+
+    const result = await safePost<TestQuestion[]>(
+      process.env.PY_TESTGEN_URL,
+      input,
+      this.fallbackQuestions,
+      {
+        timeout: 5000,
+        validateStatus: (status) => status === 200
+      }
+    );
+
+    // Additional response validation
+    if (result.status === 'success' && (!Array.isArray(result.data) || !result.data.every(
+      (q: any) => q && typeof q.id === 'string' && typeof q.questionText === 'string'
+    ))) {
+      console.error('Invalid response data structure:', result.data);
+      return {
+        status: 'error',
+        message: 'Invalid response format from test generator service',
+        data: this.fallbackQuestions
+      };
+    }
+
+    return result;
+  }
+}

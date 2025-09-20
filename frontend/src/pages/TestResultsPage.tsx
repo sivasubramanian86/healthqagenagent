@@ -1,4 +1,6 @@
 import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { getTestResults } from '../api/client';
 
 const rows = [
   { id: '1', type: 'Patient', status: 'Pass', date: '2025-09-01' },
@@ -6,6 +8,22 @@ const rows = [
 ];
 
 export default function TestResultsPage() {
+  const [results, setResults] = useState<any[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    getTestResults()
+      .then(data => {
+        setResults(data);
+        console.log('Test results loaded', data);
+      })
+      .catch(err => {
+        setError('Failed to load test results');
+        setResults([]);
+        alert('Failed to load test results');
+      });
+  }, []);
+
   return (
     <div>
       <h1 className="text-2xl font-semibold mb-4">Test Results</h1>
@@ -20,16 +38,17 @@ export default function TestResultsPage() {
             </tr>
           </thead>
           <tbody>
-            {rows.map((r) => (
-              <tr key={r.id} className="border-t">
+            {results.map(r => (
+              <tr key={r.id}>
                 <td className="p-2">{r.id}</td>
                 <td className="p-2">{r.type}</td>
-                <td className="p-2">{r.status}</td>
-                <td className="p-2">{r.date}</td>
+                <td className="p-2">{r.valid ? '✅' : '❌'}</td>
+                <td className="p-2">{r.reason}</td>
               </tr>
             ))}
           </tbody>
         </table>
+        {error && <div className="text-red-500 mt-2">{error}</div>}
       </div>
     </div>
   );
