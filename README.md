@@ -8,35 +8,19 @@ HealthQAGenAgent is designed to revolutionize healthcare software testing by aut
 
 ## Architecture Overview
 
-The system is built using a multi-agent architecture with the following components:
+The system is composed of several specialized AI agents that work together to test healthcare applications.
 
 ### Components
 
-- **Agents**: Specialized AI agents for different testing aspects
-  - Test Case Generation Agent
-  - Validation Agent
-  - Healthcare Domain Knowledge Agent
-  - Compliance Verification Agent
+-   **BugMinerAgent**: Connects to bug tracking systems like Jira and Azure DevOps to fetch recent bug reports. This helps in generating tests that target recently discovered issues.
 
-- **Common**: Shared utilities and helpers
-  - Healthcare domain models
-  - Common interfaces
-  - Utility functions
+-   **CodeAnalysisAgent**: Analyzes the application's source code to extract key structural elements such as functions and classes. This information is used to generate targeted and relevant tests.
 
-- **Infrastructure**: Cloud infrastructure management
-  - Terraform configurations
-  - Deployment scripts
-  - Service accounts
+-   **ValidationAgent**: Executes the generated tests and logs the results, including test outcomes and coverage metrics, to BigQuery for analysis and reporting.
 
-- **Dashboard**: Testing analytics and monitoring
-  - Test coverage metrics
-  - Compliance reports
-  - Performance analytics
+-   **FhirAgent**: Simulates a FHIR (Fast Healthcare Interoperability Resources) server, providing realistic healthcare data for testing purposes.
 
-- **Frontend**: Web interface for managing tests
-  - Test case management
-  - Results visualization
-  - Configuration interface
+-   **TestGeneratorAgent**: This is the core agent responsible for generating test plans and the actual test code. It uses information from the other agents to create comprehensive and effective tests.
 
 ## Google Cloud Services Used
 
@@ -133,8 +117,4 @@ We welcome contributions! Please follow these steps:
 
 ## License
 
-[Your chosen license]
-
-## Contact
-
-[Your contact information]
+MIT license
