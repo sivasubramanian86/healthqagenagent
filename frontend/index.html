@@ -1,47 +1,12 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>HealthQAGenAgent Dashboard</title>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HealthQAGenAgent</title>
   </head>
   <body>
-    <h1>HealthQAGenAgent</h1>
-    <div id="auth-status">Not signed in</div>
-    <button id="sign-in">Sign in</button>
-    <button id="trigger">Trigger Test Generation</button>
-
-    <script>
-      // TODO: replace with your Firebase config
-      const firebaseConfig = {
-        apiKey: "REPLACE_ME",
-        authDomain: "REPLACE_ME",
-        projectId: "REPLACE_ME"
-      };
-      firebase.initializeApp(firebaseConfig);
-      const auth = firebase.auth();
-
-      document.getElementById('sign-in').onclick = async () => {
-        const provider = new firebase.auth.GoogleAuthProvider();
-        try {
-          await auth.signInWithPopup(provider);
-          document.getElementById('auth-status').textContent = 'Signed in as ' + auth.currentUser.email;
-        } catch (e) {
-          document.getElementById('auth-status').textContent = 'Sign-in failed';
-        }
-      };
-
-      document.getElementById('trigger').onclick = async () => {
-        const token = await auth.currentUser.getIdToken();
-        const res = await fetch('/run-coordinator', {
-          method: 'POST',
-          headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ requirements: ['Example requirement'] })
-        });
-        alert('Triggered: ' + res.status);
-      };
-    </script>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

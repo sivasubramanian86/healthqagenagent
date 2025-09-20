@@ -47,3 +47,6 @@ docs/
 # Local data
 *.sqlite
 *.db
+
+#Synthetic files
+synthea/

@@ -1,1 +1,5 @@
-{ "projects": { "default": "healthqagenagent-local" } }
+{
+  "projects": {
+    "default": "healthqagenagent"
+  }
+}
