@@ -27,20 +27,23 @@ export class DashboardAgent {
     try {
       // Get FHIR summary
       const fhirResult = await this.fhirAgent.run({});
-      if (fhirResult.status === 'error') {
-        return { status: 'error', message: fhirResult.message, data: fallback };
+      if (fhirResult.status === 'error' || !fhirResult.data?.resources?.length) {
+        const message = fhirResult.message || 'FHIR service returned no resources.';
+        return { status: 'error', message, data: fallback };
       }
 
       // Generate test questions using the FHIR resources
       const testResult = await this.testGenAgent.run({ fhirData: fhirResult.data.resources });
-      if (testResult.status === 'error') {
-        return { status: 'error', message: testResult.message, data: fallback };
+      if (testResult.status === 'error' || !testResult.data?.length) {
+        const message = testResult.message || 'Test generator returned no questions.';
+        return { status: 'error', message, data: fallback };
       }
 
       // Evaluate results
       const evalResult = await this.evaluatorAgent.run(testResult.data);
-      if (evalResult.status === 'error') {
-        return { status: 'error', message: evalResult.message, data: fallback };
+      if (evalResult.status === 'error' || !evalResult.data?.length) {
+        const message = evalResult.message || 'Evaluator returned no results.';
+        return { status: 'error', message, data: fallback };
       }
 
       return {

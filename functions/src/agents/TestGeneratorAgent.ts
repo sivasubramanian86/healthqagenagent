@@ -39,7 +39,6 @@ export class TestGeneratorAgent {
     const testGenUrl = process.env.TESTGEN_URL;
 
     // --- Port Mode --- 
-    // If no URL is configured, run simplified logic directly in the function.
     if (!testGenUrl) {
       logger.info("TESTGEN_URL not set. Running in Port Mode (inline logic).");
 
@@ -63,7 +62,6 @@ export class TestGeneratorAgent {
         const obsUnit = observation.valueQuantity.unit || '';
         const correctAnswer = `${obsValue} ${obsUnit}`.trim();
 
-        // Generate plausible incorrect options and shuffle them
         const options = Array.from(new Set([
             correctAnswer,
             `${(obsValue * 0.85).toFixed(1)} ${obsUnit}`.trim(),
@@ -92,13 +90,12 @@ export class TestGeneratorAgent {
     }
 
     // --- Bridge Mode --- 
-    // If URL is set, call the external Python service.
     if (!Array.isArray(input.fhirData)) {
-      return {
-        status: 'error',
-        message: 'Invalid input: fhirData must be an array',
-        data: this.fallbackQuestions
-      };
+        return { status: 'error', message: 'Invalid input: fhirData must be an array', data: this.fallbackQuestions };
+    }
+    if (input.fhirData.length === 0) {
+        logger.warn("Bridge Mode: No FHIR data provided. Returning fallback questions.");
+        return { status: 'success', data: this.fallbackQuestions, message: 'Bridge Mode: No data provided.' };
     }
 
     try {

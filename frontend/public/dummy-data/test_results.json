@@ -1,0 +1,39 @@
+{
+  "status": "success",
+  "message": "Successfully fetched test results.",
+  "data": {
+    "testId": "12345",
+    "results": [
+      {
+        "testName": "Patient Data Validation",
+        "passed": true,
+        "details": "All patient records are valid."
+      },
+      {
+        "testName": "Observation Data Integrity",
+        "passed": true,
+        "details": "No integrity issues found."
+      },
+      {
+        "testName": "Condition Resource Linkage",
+        "passed": false,
+        "details": "Assertion failed: Found 12 orphaned Condition resources."
+      },
+      {
+        "testName": "MedicationRequest Authorization",
+        "passed": true,
+        "details": "All MedicationRequests are properly authorized."
+      },
+      {
+        "testName": "Encounter Timestamps",
+        "passed": false,
+        "details": "Encounter timestamps are inconsistent; 5% of records have start times after end times."
+      },
+      {
+        "testName": "Practitioner Role Validation",
+        "passed": true,
+        "details": "All practitioner roles are correctly assigned."
+      }
+    ]
+  }
+}

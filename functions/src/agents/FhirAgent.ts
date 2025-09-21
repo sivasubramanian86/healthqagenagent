@@ -36,7 +36,7 @@ export class FhirAgent {
     try {
       const client = await this.getAuthenticatedClient(fhirUrl);
       const response = await client.request({
-        url: fhirUrl,
+        url: `${fhirUrl}/run`,
         method: 'POST',
         data: input,
       });

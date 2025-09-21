@@ -9,27 +9,19 @@
     "rewrites": [
       {
         "source": "/api/dashboard",
-        "function": "dashboard"
+        "destination": "/dummy-data/dashboard.json"
       },
       {
         "source": "/api/fhir/summary",
-        "function": "fhirSummary"
+        "destination": "/dummy-data/fhir_summary.json"
       },
       {
         "source": "/api/tests/generate",
-        "function": "generateTests"
+        "destination": "/dummy-data/generate_tests.json"
       },
       {
         "source": "/api/tests/results",
-        "function": "testResults"
-      },
-      {
-        "source": "/api/bug/analyze",
-        "function": "analyzeBug"
-      },
-      {
-        "source": "/api/code/analyze",
-        "function": "analyzeCode"
+        "destination": "/dummy-data/test_results.json"
       },
       {
         "source": "**",

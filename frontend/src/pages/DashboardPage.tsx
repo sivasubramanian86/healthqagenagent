@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { getDashboardData } from '../api/client';
+import { getDashboardData, getTestResults } from '../api/client';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -23,17 +23,33 @@ const KPI = ({ title, value }: { title: string; value: string }) => (
 
 export default function DashboardPage() {
   const [dashboardData, setDashboardData] = useState<any>(null);
+  const [testResults, setTestResults] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     const fetchData = async () => {
-      const response = await getDashboardData();
-      if (response.status === 'success') {
-        setDashboardData(response.data);
-      } else {
-        setDashboardData(response.data);
-        setError(response.message || 'An unknown error occurred.');
-        console.warn('Using fallback data for dashboard.');
+      try {
+        const dashboardResponse = await getDashboardData();
+        if (dashboardResponse.status === 'success') {
+          setDashboardData(dashboardResponse.data);
+        } else {
+          setDashboardData(dashboardResponse.data);
+          setError(dashboardResponse.message || 'An unknown error occurred.');
+          console.warn('Using fallback data for dashboard.');
+        }
+
+        const testResultsResponse = await getTestResults();
+        if (testResultsResponse.status === 'success' && testResultsResponse.data && Array.isArray(testResultsResponse.data.results)) {
+            setTestResults(testResultsResponse.data.results);
+        } else {
+            console.warn('Could not fetch test results for dashboard chart.');
+        }
+
+      } catch (e: any) {
+        setError(e.message || 'A critical error occurred.');
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -53,8 +69,8 @@ export default function DashboardPage() {
     ],
   };
 
-  const passCount = dashboardData?.results?.filter((r: any) => r.valid).length ?? 0;
-  const failCount = dashboardData?.results?.filter((r: any) => !r.valid).length ?? 0;
+  const passCount = testResults.filter((r: any) => r.passed).length ?? 0;
+  const failCount = testResults.filter((r: any) => !r.passed).length ?? 0;
 
   const resultDistributionData = {
     labels: ['Pass', 'Fail'],
@@ -84,34 +100,44 @@ export default function DashboardPage() {
 
       {error && <p className="mb-4 text-orange-500">Warning: {error}</p>}
 
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <KPI title="Total Patients" value={dashboardData?.fhirSummary?.patientCount?.toString() ?? '...'} />
-        <KPI title="Tests Generated" value={dashboardData?.questions?.length?.toString() ?? '...'} />
-        <KPI title="Tests Evaluated" value={dashboardData?.results?.length?.toString() ?? '...'} />
-      </section>
+      {loading ? (
+        <p>Loading dashboard...</p>
+      ) : dashboardData ? (
+        <>
+          <section className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <KPI title="Total Patients" value={dashboardData.fhirSummary?.patientCount?.toString() ?? 'N/A'} />
+            <KPI title="Tests Generated" value={dashboardData.questions?.length?.toString() ?? 'N/A'} />
+            <KPI title="Tests Evaluated" value={testResults?.length?.toString() ?? 'N/A'} />
+          </section>
 
-      <section className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-white dark:bg-gray-800 p-4 rounded shadow">
-          <h3 className="font-medium mb-2">Tests by Resource Type</h3>
-          {dashboardData?.fhirSummary && <Bar data={resourceCountsData} />}
-        </div>
+          <section className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-white dark:bg-gray-800 p-4 rounded shadow">
+              <h3 className="font-medium mb-2">Resource Counts</h3>
+              {dashboardData.fhirSummary && <Bar data={resourceCountsData} />}
+            </div>
 
-        <div className="bg-white dark:bg-gray-800 p-4 rounded shadow">
-          <h3 className="font-medium mb-2">Result Distribution</h3>
-          {dashboardData?.results && <Pie data={resultDistributionData} />}
-        </div>
-      </section>
+            <div className="bg-white dark:bg-gray-800 p-4 rounded shadow">
+              <h3 className="font-medium mb-2">Result Distribution</h3>
+              {(passCount > 0 || failCount > 0) && <Pie data={resultDistributionData} />}
+            </div>
+          </section>
 
-      <section>
-        <h2 className="text-lg font-semibold mb-2">Resource Counts</h2>
-        <ul className="space-y-2">
-          {dashboardData?.fhirSummary
-            ? Object.entries(dashboardData.fhirSummary.resourceCounts).map(([k, v]: [string, any]) => (
-                <li key={k} className="bg-white dark:bg-gray-800 p-3 rounded shadow">{k}: {v}</li>
-              ))
-            : <li>Loading...</li>}
-        </ul>
-      </section>
+          <section>
+            <h2 className="text-lg font-semibold mb-2">Resource Counts</h2>
+            <ul className="space-y-2">
+              {dashboardData.fhirSummary ? (
+                Object.entries(dashboardData.fhirSummary.resourceCounts).map(([k, v]: [string, any]) => (
+                  <li key={k} className="bg-white dark:bg-gray-800 p-3 rounded shadow">{k}: {v}</li>
+                ))
+              ) : (
+                <li>No resource data available.</li>
+              )}
+            </ul>
+          </section>
+        </>
+      ) : (
+        <p>No dashboard data available.</p>
+      )}
     </div>
   );
 }

@@ -1,0 +1,17 @@
+{
+  "status": "success",
+  "message": "Successfully fetched FHIR summary.",
+  "data": {
+    "patientCount": 542,
+    "resourceCounts": {
+      "Patient": 542,
+      "Observation": 12345,
+      "Condition": 2345,
+      "MedicationRequest": 4321,
+      "Encounter": 8765,
+      "Practitioner": 123,
+      "Organization": 45,
+      "Procedure": 3456
+    }
+  }
+}
