@@ -1,0 +1,19 @@
+{
+  "responses": {
+    "summarize top compliance failures": {
+      "title": "Top Compliance Failures Summary",
+      "body": "Based on your test results, I found 2 critical compliance failures:\n\n1. **FHIR Resource Structure** (TC002) - Missing required 'resourceType' field in observation records\n2. **Reference Integrity** (TC005) - Broken reference to Patient/unknown-id in Observation\n\nThese failures affect data interoperability and could lead to integration issues with other healthcare systems. I recommend prioritizing the resourceType field fixes first.",
+      "tags": ["compliance", "critical", "fhir"]
+    },
+    "what are the main issues": {
+      "title": "Main Issues Analysis",
+      "body": "Your test run identified several key issues:\n\n**Critical Issues (2):**\n- Missing FHIR resourceType fields\n- Broken patient references\n\n**Warnings (1):**\n- Date format inconsistencies in effectiveDateTime\n\n**Passed Tests (2):**\n- Patient demographics validation ✓\n- Code system validation ✓\n\nOverall compliance rate: 60% (3/5 tests passing)",
+      "tags": ["analysis", "overview", "metrics"]
+    },
+    "how to fix the failures": {
+      "title": "Remediation Recommendations",
+      "body": "Here's how to fix the identified failures:\n\n**For TC002 (FHIR Structure):**\n```json\n{\n  \"resourceType\": \"Observation\",\n  \"id\": \"obs-001\",\n  // ... rest of your data\n}\n```\n\n**For TC005 (Reference Integrity):**\n- Verify all patient IDs exist before referencing\n- Use valid patient references like \"Patient/patient-001\"\n- Implement reference validation in your data pipeline\n\n**For TC003 (Date Format):**\n- Standardize all dates to ISO 8601 format (YYYY-MM-DDTHH:mm:ssZ)",
+      "tags": ["remediation", "code-fix", "best-practices"]
+    }
+  }
+}

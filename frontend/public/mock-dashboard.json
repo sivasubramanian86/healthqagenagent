@@ -1,0 +1,26 @@
+{
+  "fhirSummary": {
+    "patientCount": 150,
+    "resourceCounts": {
+      "Patient": 150,
+      "Observation": 450,
+      "Condition": 75,
+      "Medication": 200,
+      "Encounter": 300
+    }
+  },
+  "questions": [
+    {"id": "Q1", "question": "Validate patient demographics"},
+    {"id": "Q2", "question": "Check FHIR resource structure"},
+    {"id": "Q3", "question": "Verify date formats"},
+    {"id": "Q4", "question": "Validate code systems"},
+    {"id": "Q5", "question": "Check reference integrity"}
+  ],
+  "results": [
+    {"id": "R1", "valid": true, "status": "Pass", "date": "2024-01-15"},
+    {"id": "R2", "valid": false, "status": "Fail", "date": "2024-01-15"},
+    {"id": "R3", "valid": true, "status": "Pass", "date": "2024-01-14"},
+    {"id": "R4", "valid": false, "status": "Fail", "date": "2024-01-14"},
+    {"id": "R5", "valid": true, "status": "Pass", "date": "2024-01-13"}
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "run_id": "demo-run-12345",
+  "seed": "abc123def456",
+  "tests": [
+    {
+      "id": "TC001",
+      "rule": "Patient demographics validation",
+      "severity": "High",
+      "status": "Pass",
+      "evidence": "Patient record contains required fields: name, birthDate, gender",
+      "suggestion": "Continue monitoring patient data completeness"
+    },
+    {
+      "id": "TC002", 
+      "rule": "FHIR resource structure compliance",
+      "severity": "Medium",
+      "status": "Fail",
+      "evidence": "Missing required 'resourceType' field in observation",
+      "suggestion": "Add resourceType field to all FHIR resources"
+    },
+    {
+      "id": "TC003",
+      "rule": "Date format validation",
+      "severity": "Low", 
+      "status": "Warn",
+      "evidence": "Date format inconsistency detected in effectiveDateTime",
+      "suggestion": "Standardize date formats to ISO 8601"
+    },
+    {
+      "id": "TC004",
+      "rule": "Code system validation",
+      "severity": "High",
+      "status": "Pass",
+      "evidence": "All coding systems reference valid terminologies",
+      "suggestion": "Maintain current coding practices"
+    },
+    {
+      "id": "TC005",
+      "rule": "Reference integrity check",
+      "severity": "Medium",
+      "status": "Fail", 
+      "evidence": "Broken reference to Patient/unknown-id in Observation",
+      "suggestion": "Verify all resource references exist and are valid"
+    }
+  ]
+}

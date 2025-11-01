@@ -1,0 +1,76 @@
+{
+  "resourceType": "Bundle",
+  "total": 5,
+  "entry": [
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "id": "patient-001",
+        "status": "active",
+        "name": [{"family": "Smith", "given": ["John"]}],
+        "gender": "male",
+        "birthDate": "1980-05-15",
+        "meta": {
+          "lastUpdated": "2024-01-15T10:30:00Z"
+        }
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Patient", 
+        "id": "patient-002",
+        "status": "active",
+        "name": [{"family": "Johnson", "given": ["Sarah"]}],
+        "gender": "female",
+        "birthDate": "1975-08-22",
+        "meta": {
+          "lastUpdated": "2024-01-14T14:20:00Z"
+        }
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "obs-001", 
+        "status": "final",
+        "code": {
+          "coding": [{"system": "http://loinc.org", "code": "8480-6", "display": "Systolic blood pressure"}]
+        },
+        "valueQuantity": {"value": 120, "unit": "mmHg"},
+        "subject": {"reference": "Patient/patient-001"},
+        "meta": {
+          "lastUpdated": "2024-01-15T09:15:00Z"
+        }
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Observation",
+        "id": "obs-002",
+        "status": "final", 
+        "code": {
+          "coding": [{"system": "http://loinc.org", "code": "8462-4", "display": "Diastolic blood pressure"}]
+        },
+        "valueQuantity": {"value": 80, "unit": "mmHg"},
+        "subject": {"reference": "Patient/patient-001"},
+        "meta": {
+          "lastUpdated": "2024-01-15T09:15:00Z"
+        }
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Condition",
+        "id": "condition-001",
+        "status": "active",
+        "code": {
+          "coding": [{"system": "http://snomed.info/sct", "code": "38341003", "display": "Hypertension"}]
+        },
+        "subject": {"reference": "Patient/patient-001"},
+        "meta": {
+          "lastUpdated": "2024-01-10T16:45:00Z"
+        }
+      }
+    }
+  ]
+}

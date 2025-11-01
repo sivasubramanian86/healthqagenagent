@@ -1,0 +1,52 @@
+{
+  "run_id": "demo-run-67890",
+  "seed": "xyz789abc123",
+  "timestamp": "2024-01-15T14:30:00Z",
+  "results": [
+    {
+      "id": "TR001",
+      "rule": "Patient demographics validation",
+      "severity": "High",
+      "status": "Pass",
+      "rationale": "All required patient fields present and valid",
+      "evidence": "Patient record contains name, birthDate, gender",
+      "suggestion": "Continue current validation practices"
+    },
+    {
+      "id": "TR002",
+      "rule": "FHIR resource structure compliance",
+      "severity": "Medium", 
+      "status": "Fail",
+      "rationale": "Missing required resourceType field",
+      "evidence": "Observation missing resourceType field",
+      "suggestion": "Add resourceType to all FHIR resources"
+    },
+    {
+      "id": "TR003",
+      "rule": "Date format validation",
+      "severity": "Low",
+      "status": "Warn",
+      "rationale": "Inconsistent date formatting detected",
+      "evidence": "Mixed ISO and custom date formats",
+      "suggestion": "Standardize to ISO 8601 format"
+    },
+    {
+      "id": "TR004",
+      "rule": "Code system validation",
+      "severity": "High",
+      "status": "Pass",
+      "rationale": "All coding systems valid",
+      "evidence": "LOINC and SNOMED codes verified",
+      "suggestion": "Maintain current coding practices"
+    },
+    {
+      "id": "TR005",
+      "rule": "Reference integrity check",
+      "severity": "Medium",
+      "status": "Fail",
+      "rationale": "Broken patient reference found",
+      "evidence": "Reference to non-existent Patient/unknown-id",
+      "suggestion": "Implement reference validation"
+    }
+  ]
+}

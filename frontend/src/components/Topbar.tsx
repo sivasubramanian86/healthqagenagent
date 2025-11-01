@@ -1,6 +1,7 @@
 import React from 'react';
-import { BellIcon } from '@heroicons/react/24/outline';
+import { BellIcon, SunIcon, MoonIcon } from '@heroicons/react/24/outline';
 import { useLocation } from 'react-router-dom';
+import { useTheme } from '../contexts/ThemeContext';
 
 // A helper to format the title from the pathname
 const formatTitle = (pathname: string) => {
@@ -12,18 +13,28 @@ const formatTitle = (pathname: string) => {
 export default function Topbar() {
   const location = useLocation();
   const pageTitle = formatTitle(location.pathname);
+  const { theme, toggleTheme } = useTheme();
 
   return (
     <header className="flex items-center justify-between p-6 bg-transparent">
       {/* Page Title */}
       <div>
-          <h1 className="text-2xl font-bold text-white">{pageTitle}</h1>
-          <p className="text-sm text-gray-400">Your central hub for healthcare AI tools</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{pageTitle}</h1>
+          <p className="text-sm text-gray-600 dark:text-gray-400">Your central hub for healthcare AI tools</p>
       </div>
 
       {/* Right-side controls */}
       <div className="flex items-center gap-6">
-        <button className="relative p-2 text-gray-400 hover:text-white transition-colors" title="Notifications">
+        {/* Theme Toggle */}
+        <button 
+          onClick={toggleTheme}
+          className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors" 
+          title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+        >
+          {theme === 'light' ? <MoonIcon className="w-6 h-6" /> : <SunIcon className="w-6 h-6" />}
+        </button>
+
+        <button className="relative p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors" title="Notifications">
           <BellIcon className="w-6 h-6" />
           {/* Notification badge */}
           <span className="absolute top-1 right-1 block w-2 h-2 bg-indigo-500 rounded-full"></span>
@@ -33,8 +44,8 @@ export default function Topbar() {
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-full flex items-center justify-center font-bold text-white">K</div>
           <div>
-            <div className="font-medium text-white">Kimberly</div>
-            <div className="text-xs text-gray-400">Administrator</div>
+            <div className="font-medium text-gray-900 dark:text-white">Kimberly</div>
+            <div className="text-xs text-gray-600 dark:text-gray-400">Administrator</div>
           </div>
         </div>
       </div>
