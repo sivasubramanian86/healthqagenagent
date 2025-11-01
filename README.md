@@ -198,25 +198,6 @@ FHIR_ENDPOINT=your-fhir-server
 
 ---
 
-## 🎥 Demo Video & Screenshots
-
-### 📹 Demo Video
-[![HealthQAGenAgent Demo](https://img.youtube.com/vi/YOUR_VIDEO_ID/0.jpg)](https://www.youtube.com/watch?v=YOUR_VIDEO_ID)
-
-### 📸 Screenshots
-
-<div align="center">
-
-| Dashboard | Test Generation |
-|-----------|-----------------|
-| ![Dashboard](docs/images/dashboard.png) | ![Generate Tests](docs/images/generate.png) |
-
-| FHIR Explorer | Conversational AI |
-|---------------|-------------------|
-| ![FHIR Explorer](docs/images/fhir-explorer.png) | ![Chat Interface](docs/images/chat.png) |
-
-</div>
-
 ---
 
 ## 🗺️ Roadmap

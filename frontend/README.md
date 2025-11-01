@@ -19,25 +19,25 @@
 ```mermaid
 graph TB
     subgraph "Pages Layer"
-        A[📊 Dashboard]
-        B[⚙️ Generate Tests]
-        C[🔍 FHIR Explorer]
-        D[✅ Test Results]
-        E[⚡ Settings]
+        A[Dashboard]
+        B[Generate Tests]
+        C[FHIR Explorer]
+        D[Test Results]
+        E[Settings]
     end
     
     subgraph "Shared Components"
-        F[🧩 Layout]
-        G[🌌 ThemeProvider]
-        H[📊 Charts]
-        I[💬 Chat Interface]
+        F[Layout]
+        G[ThemeProvider]
+        H[Charts]
+        I[Chat Interface]
     end
     
     subgraph "API Layer"
-        J[/api/tests/generate]
-        K[/api/fhir/search]
-        L[/api/nlp/query]
-        M[/api/dashboard]
+        J[API Tests Generate]
+        K[API FHIR Search]
+        L[API NLP Query]
+        M[API Dashboard]
     end
     
     subgraph "Mock Data"
@@ -209,29 +209,7 @@ npm run type-check
 npm run format
 ```
 
----
 
-## 📸 Screenshots
-
-### Dashboard Page
-![Dashboard](docs/screenshots/dashboard.png)
-*Real-time healthcare metrics and compliance charts*
-
-### Generate Tests Page
-![Generate Tests](docs/screenshots/generate.png)
-*File upload, test generation, and conversational AI interface*
-
-### FHIR Explorer Page
-![FHIR Explorer](docs/screenshots/fhir-explorer.png)
-*Healthcare resource search and JSON detail viewer*
-
-### Test Results Page
-![Test Results](docs/screenshots/results.png)
-*Advanced filtering, status badges, and CSV export*
-
-### Settings Page
-![Settings](docs/screenshots/settings.png)
-*Theme toggle, demo configuration, and FHIR settings*
 
 ---
 
