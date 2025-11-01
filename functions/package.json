@@ -3,6 +3,7 @@
     "node": "20"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.21.0",
     "axios": "^1.6.0",
     "dotenv": "^16.4.5",
     "firebase-functions": "^6.4.0",
